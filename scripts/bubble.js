@@ -16,13 +16,13 @@ function drawBubble(id, dataset, wave) {
 
         const dataGroup = d3.group(data, d => d.location);
         // console.log(dataGroup)
-        // Years array
         let countries = [];
 
         for (let i = 0; i < dataGroup.size; i++) {
             countries[i] = Array.from(dataGroup)[i][0]
         }
 
+        // greyOut called when hovering
         const greyOut = function () {
             // Grey out the rest
             svg5.selectAll(".bubble")
@@ -42,6 +42,7 @@ function drawBubble(id, dataset, wave) {
                 .style("opacity", 0.5);
         }
 
+        // called on onMouseLeave
         const doNotHighlight = function () {
             for (let i = 0; i < dataGroup.size; i++) {
                 svg5.select("." + countries[i])
@@ -183,7 +184,8 @@ function drawBubble(id, dataset, wave) {
                 .attr("cy", d => y(d.people_fully_vaccinated_per_hundred))
                 .attr("r", d => z(d.gdp_per_capita))
                 .style("fill", function (d) {
-                    return myColor(d.location)
+                    greyOut()
+                    return "lightgrey"
                 })
                 .style("opacity", 1)
                 .attr("stroke", "none")
@@ -294,6 +296,24 @@ function drawBubble(id, dataset, wave) {
                 d3.select(this).attr("stroke", "none")
             })
 
+        // Add legend for size
+    svg5.append("g")
+        .attr("class", "legendSize")
+        .attr("transform", "translate(90, 10)")
+    var legendSize = d3.legendSize()
+        .scale(z)
+        .shape('circle')
+        .shapePadding(0)
+        .labelAlign('end')
+        .orient('vertical')
+        .labels(d3.legendHelpers.thresholdLabels)
+        .labelFormat(d3.format(".1s"));
+    svg5.select(".legendSize")
+        .call(legendSize)
+        .selectAll("circle")
+        .attr("fill", "#f8f9fa")
+        .attr("stroke", "black");
+
         // Draw legend text and values
         legend.append("text")
             .attr("x", 25)
@@ -343,58 +363,12 @@ function drawBubble(id, dataset, wave) {
             .style("font-size", "14px")
             .style("font-weight", "bold")
             .text("Countries");
-
-        // The scale you use for bubble size
-        var size = d3.scaleSqrt()
-            .domain([1, 100])  // What's in the data, let's say it is percentage
-            .range([1, 70])  // Size in pixel
-
-        // Add legend: circles
-        var valuesToShow = [10, 30, 50, 100]
-        var xCircle = 150
-        var xLabel = 380
-        var yCircle = 160
-        svg5
-            .selectAll("legend")
-            .data(valuesToShow)
-            .enter()
-            .append("circle")
-            .attr("cx", xCircle)
-            .attr("cy", function(d){return yCircle - size(d) } )
-            .attr("r", function(d){ return size(d) })
-            .style("fill", "none")
-            .attr("stroke", "black")
-
-        // Add legend: segments
-        svg5
-            .selectAll("legend")
-            .data(valuesToShow)
-            .enter()
-            .append("line")
-            .attr('x1', function(d){ return xCircle + size(d) } )
-            .attr('x2', xLabel)
-            .attr('y1', function(d){ return yCircle - size(d) } )
-            .attr('y2', function(d){ return yCircle - size(d) } )
-            .attr('stroke', 'black')
-            .style('stroke-dasharray', ('2,2'))
-
-// Add legend: labels
-        svg5
-            .selectAll("legend")
-            .data(valuesToShow)
-            .enter()
-            .append("text")
-            .attr('x', xLabel)
-            .attr('y', function(d){ return yCircle - size(d) } )
-            .text( function(d){ return d } )
-            .style("font-size", 13)
-            .attr('alignment-baseline', 'middle')
     })
 }
 
 drawBubble("#bubble", "../assets/data/bubblechart/gdp_vaccination_data.csv", "2nd")
 
-function handlePaymentChange5(event) {
+function handleBubble(event) {
     const wave = event.target.id
 
     if(wave === "flexRadio9")

@@ -1,25 +1,24 @@
-function drawMap(id, dataset, wave){
+function drawMap2(id, dataset, wave, selectedOptionValue){
+
+    d3.select(id).selectAll("svg").remove();
 
     const map = new Map();
-    // Assuming your color scale's domain is from 0 to 100 (representing percentages)
-    // Divide the domain into 5 equal parts (0-20%, 20-40%, 40-60%, 60-80%, 80-100%)
-    const domainValues = [0, 20, 40, 60, 80, 100];
     let colorMap = d3.scaleLinear()
-    .domain(domainValues)
-    .range(['lightgrey', '#FFB17A', '#F1FEC6', '#037971', '#023436','black']);
+        .domain([0, 20, 40, 60, 80, 100])
+        .range(['lightgrey', '#FFB17A', "#F1FEC6", '#037971', '#023436', 'black']);
 
     // load both geometric and aggregated data
     Promise.all([
         d3.json("/assets/data/map/custom.geo.json"),
         d3.csv(dataset, function (d) {
-            // console.log(d);
-            map.set(d.location, +d['average_stringency_containment_index'])
+            map.set(d.location, +d[selectedOptionValue])
         })
     ]).then(function (loadData) {
 
+        // set the dimensions and margins of the graph
         const margin = {top: 10, right: 100, bottom: 10, left: 100},
-            width = 1000 - margin.left - margin.right,
-            height = 800 - margin.top - margin.bottom;
+            width = 1200 - margin.left - margin.right,
+            height = 900 - margin.top - margin.bottom;
 
         var mapId = document.getElementById(id.replace("#", ""))
         mapId.innerHTML = "";
@@ -34,20 +33,10 @@ function drawMap(id, dataset, wave){
             .attr("class", "axis-label")
             .attr("text-anchor", "middle")
             .style("font-size", "20px")
-            .attr("x", width/3+20)
+            .attr("x", width/3)
             .attr("y", margin.bottom)
-            .text(`${wave} wave MAP: average between stringency and containment`)
-            .style("transform", "translate(-20px, 20px)")
-            .style("font-weight", "bold")
-            .style("font-family", "Fira Sans");
-        svg.append("text")
-            .attr("class", "axis-label")
-            .attr("text-anchor", "middle")
-            .style("font-size", "20px")
-            .attr("x", width/3+20)
-            .attr("y", margin.bottom + 25) // Adjust the 'y' position for the second line
-            .text("policies adopted against Covid-19 by all EU's countries in %")
-            .style("transform", "translate(-20px, 20px)")
+            .text(`${wave} wave MAP: all the policies adopted against Covid-19 by all EU's countries.`)
+            .style("transform", "translate(20px, 20px)")
             .style("font-weight", "bold")
             .style("font-family", "Fira Sans");
 
@@ -57,8 +46,9 @@ function drawMap(id, dataset, wave){
             .scale([width / 1.3])
             .translate([width / 2, height / 2])
 
+        console.log(d3.schemeGreens[6])
         const color = colorMap
-        Legend(colorMap, "#legend_map")
+        Legend(colorMap, "#legend_map1")
 
         let topo = loadData[0]
         // projection.fitSize([width, height], topo);
@@ -106,7 +96,7 @@ function drawMap(id, dataset, wave){
                 let tooltipText;
                 // console.log(percValue)
                 if (percValue !== 0 && percValue) {
-                    tooltipText = "The policies adopted <br>were " + percValue + "% strict";
+                    tooltipText = `The ${selectedOptionValue.replace(/_/g, ' ')} is <br> ${percValue}`;
                 } else if (isNaN(percValue)){
                     tooltipText = "Missing data";
                 }
@@ -128,25 +118,38 @@ function drawMap(id, dataset, wave){
     })
 }
 
-drawMap("#map1", "assets/data/map/map_tot_stringency1.csv", "1st")
+drawMap2("#mapFinal", "assets/data/finalMap/FinalMap1.csv", "1st", "gdp_per_capita")
 
-function handlePaymentChange2(event) {
-    const wave = event.target.id
+function handlePaymentChange6(event) {
+    // Get the value of the selected radio button
+    const radioButtons = document.getElementsByName("flexRadioDefault4");
+    let selectedRadioButtonValue;
 
-    if(wave === "flexRadio1"){
-        drawStackedBar("#barplot1", "/assets/data/barplot/average_1.csv", "1st")
-        drawMap("#map1", "/assets/data/map/map_tot_stringency1.csv",  "1st")
+    for (const radioButton of radioButtons) {
+        if (radioButton.checked) {
+            selectedRadioButtonValue = radioButton.id;
+            break; // Exit the loop once a checked radio button is found
+        }
     }
-    else if(wave === "flexRadio2"){
-        drawStackedBar("#barplot1", "/assets/data/barplot/average_2.csv", "2nd")
-        drawMap("#map1", "/assets/data/map/map_tot_stringency2.csv", "2nd")
+
+    // Get the value of the selected option from the select element
+    const selectElement = document.getElementById("map2");
+    const selectedOptionValue = selectElement.value;
+
+    //console.log(selectedRadioButtonValue)
+    //console.log(selectedOptionValue)
+
+
+    if(selectedRadioButtonValue === "flexRadio11"){ // 1st wave
+        drawMap2("#mapFinal", "assets/data/finalMap/FinalMap1.csv",  "1st", selectedOptionValue)
     }
-    else if(wave === "flexRadio3"){
-        drawStackedBar("#barplot1", "/assets/data/barplot/average_3.csv", "3rd")
-        drawMap("#map1", "/assets/data/map/map_tot_stringency3.csv", "3rd")
+    else if(selectedRadioButtonValue === "flexRadio12"){
+        drawMap2("#mapFinal", "assets/data/finalMap/FinalMap2.csv", "2nd", selectedOptionValue)
+    }
+    else if(selectedRadioButtonValue === "flexRadio13"){
+        drawMap2("#mapFinal", "assets/data/finalMap/FinalMap3.csv", "3rd", selectedOptionValue)
     }
     else{
-        drawStackedBar("#barplot1", "/assets/data/barplot/average_1.csv", "1st")
-        drawMap("#map1", "/assets/data/map/map_tot_stringency1.csv", "1st")
+        drawMap2("#mapFinal", "assets/data/finalMap/FinalMap1.csv",  "1st", selectedOptionValue)
     }
 }
